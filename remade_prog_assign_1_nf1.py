@@ -122,35 +122,32 @@ def verify_all_nucleotides(record):
     else:
         print("not all nucleotides defined")
 
-def compare_two_AA_seqs(first,second):
-    print("Molecular weight:\n")
-    print("%0.2f" % first.molecular_weight(),end=" : ")
-    print("%0.2f" % second.molecular_weight())
+def compare_AA_seqs(*args):
+    print("Molecular weight:")
+    for aa_seq in args:
+        print("| %0.2f" % aa_seq.molecular_weight(),end=" | ")
 
-    print("\nAromaticity:\n")
-    print("%0.2f" % first.aromaticity(),end=" : ")
-    print("%0.2f" % second.aromaticity())
+    print("\nAromaticity:")
+    for aa_seq in args:
+        print("| %0.2f" % aa_seq.aromaticity(),end=" | ")
 
-    print("\nInstability Index:\n")
-    print("%0.2f" % first.instability_index(),end=" : ")
-    print("%0.2f" % second.instability_index())
+    print("\nInstability Index:")
+    for aa_seq in args:
+        print("| %0.2f" % aa_seq.instability_index(),end=" | ")
 
-    print("\nIsoelectric Point:\n")
-    print("%0.2f" % first.isoelectric_point(),end=" : ")
-    print("%0.2f" % second.isoelectric_point())
+    print("\nIsoelectric Point:")
+    for aa_seq in args:
+        print("| %0.2f" % aa_seq.isoelectric_point(),end=" | ")
 
+    print("\nSecondary Structure Fraction:")
+    for aa_seq in args:
+        sec_struc_first = aa_seq.secondary_structure_fraction()
+        print("| %0.2f" % sec_struc_first[0],end=" | ")  # helix
 
-    sec_struc_first = first.secondary_structure_fraction()
-    sec_struc_second = second.secondary_structure_fraction()
-    print("\nSecondary Structure Fraction:\n")
-    print("%0.2f" % sec_struc_first[0],end=" : ")  # helix
-    print("%0.2f" % sec_struc_second[0])  # helix
-
-    print("\nMolar Extinction coefficient:\n")
-    first_epsilon_prot = first.molar_extinction_coefficient()  # [reduced, oxidized]
-    second_epsilon_prot = second.molar_extinction_coefficient()  # [reduced, oxidized]
-    print("one: " + str(first_epsilon_prot[0]),end=" : ")  # with reduced cysteines
-    print("two: " + str(second_epsilon_prot[0]))  # with reduced cysteines
+    print("\nMolar Extinction coefficient:")
+    for aa_seq in args:
+        first_epsilon_prot = aa_seq.molar_extinction_coefficient()  # [reduced, oxidized]
+        print("| " + str(first_epsilon_prot[0]),end=" | ")  # with reduced cysteines
 
 def clean_AA_seq(seq):
     seq = str(seq).replace("*", "")
@@ -163,8 +160,8 @@ def main():
     start = 31094927
     end = 31377677
     length = end-start
-    print(length)
-    print(length/3)
+    # print(length)
+    # print(length/3)
     initial_record = None
     first_SNP_location = 31357033
     first_SNP_record = None
@@ -188,26 +185,30 @@ def main():
         second_SNP_record = change_nucleotide(second_SNP_record,second_SNP_location-start,"A")
         print("SECOND SNP SEQ replace T with A successfully")
 
-
+    initial_complete = complete_nucleotide_codons_N(initial_record)
     first_SNP_record = complete_nucleotide_codons_N(first_SNP_record)
     second_SNP_record = complete_nucleotide_codons_N(second_SNP_record)
 
+    initial_complete_seq_2_Protein = initial_complete.seq.translate()
     first_SNP_seq_2_Protein = first_SNP_record.seq.translate()
     second_SNP_seq_2_Protein = second_SNP_record.seq.translate()
-    print(first_SNP_seq_2_Protein)
-    print(second_SNP_seq_2_Protein)
+    # print(first_SNP_seq_2_Protein)
+    # print(second_SNP_seq_2_Protein)
 
-    print(len(first_SNP_seq_2_Protein))
-    print(len(second_SNP_seq_2_Protein))
-    print(type(first_SNP_seq_2_Protein))
+    # print(len(initial_complete_seq_2_Protein))
+    # print(len(first_SNP_seq_2_Protein))
+    # print(len(second_SNP_seq_2_Protein))
+    # print(type(first_SNP_seq_2_Protein))
+    initial_clean = clean_AA_seq(initial_complete_seq_2_Protein)
     first_clean = clean_AA_seq(first_SNP_seq_2_Protein)
     second_clean = clean_AA_seq(second_SNP_seq_2_Protein)
-    print(first_clean)
+    # print(first_clean)
 
+    initial = ProteinAnalysis(initial_clean)
     one = ProteinAnalysis(first_clean)
     two = ProteinAnalysis(second_clean)
 
-    compare_two_AA_seqs(one,two)
+    compare_AA_seqs(initial,one,two)
     # NC_000017.11:31094927-31377677
     # first SNP location C>T 31357033
     # second SNP location 31095311 T>A
