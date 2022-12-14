@@ -30,9 +30,18 @@ MM/DD/YY:
 # IMPORTS
 import os
 import re
+import copy
 from copy import copy
+
+import Bio.SeqRecord
 from Bio import Entrez
 from Bio import SeqIO
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+from Bio.SeqUtils.ProtParam import ProtParamData
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+
+
 import xmltodict
 
 # ENTREZ LIST OF DBs
@@ -69,26 +78,139 @@ def get_valid_ids(list_of_ids, db_name, return_type, query_type):
     return copy_list_of_ids
 
 
+def get_nucleotide_in_NF1(location,sequence):
+    start = 31094927
+    relative_location = location - start
+    if relative_location < 0:
+        return None
+    return sequence[relative_location]
+
+def bio_seq_analytics():
+    pass
+
+
+def complete_nucleotide_codons_N(record):
+    seq = record.seq
+    seq_list = list(seq)
+    result = len(seq_list) / 3
+    while not (result).is_integer():
+        seq_list.append("N")
+        result = len(seq_list)/3
+    return SeqRecord(Seq(''.join(seq_list)))
+
+def copy_record(record):
+    seq_list = list(record.seq)
+    return SeqRecord(Seq(''.join(seq_list)))
+
+def verify_nucleotide(record,location,nucleotide):
+    seq = record.seq
+    if seq[location] != nucleotide:
+        return False
+    return True
+
+def change_nucleotide(record,location,nucleotide):
+    seq_list = list(record.seq)
+    seq_list[location] = nucleotide
+    return SeqRecord(Seq(''.join(seq_list)))
+
+def verify_all_nucleotides(record):
+    seq_len = len(record.seq)
+    count = 0
+    count += sum([1 for x in record.seq if (x == "A" or x == "G" or x == "C" or x == "T")])
+    if count == seq_len:
+        print("all nucleotides defined")
+    else:
+        print("not all nucleotides defined")
+
+def compare_two_AA_seqs(first,second):
+    print("Molecular weight:\n")
+    print("%0.2f" % first.molecular_weight(),end=" : ")
+    print("%0.2f" % second.molecular_weight())
+
+    print("\nAromaticity:\n")
+    print("%0.2f" % first.aromaticity(),end=" : ")
+    print("%0.2f" % second.aromaticity())
+
+    print("\nInstability Index:\n")
+    print("%0.2f" % first.instability_index(),end=" : ")
+    print("%0.2f" % second.instability_index())
+
+    print("\nIsoelectric Point:\n")
+    print("%0.2f" % first.isoelectric_point(),end=" : ")
+    print("%0.2f" % second.isoelectric_point())
+
+
+    sec_struc_first = first.secondary_structure_fraction()
+    sec_struc_second = second.secondary_structure_fraction()
+    print("\nSecondary Structure Fraction:\n")
+    print("%0.2f" % sec_struc_first[0],end=" : ")  # helix
+    print("%0.2f" % sec_struc_second[0])  # helix
+
+    print("\nMolar Extinction coefficient:\n")
+    first_epsilon_prot = first.molar_extinction_coefficient()  # [reduced, oxidized]
+    second_epsilon_prot = second.molar_extinction_coefficient()  # [reduced, oxidized]
+    print("one: " + str(first_epsilon_prot[0]),end=" : ")  # with reduced cysteines
+    print("two: " + str(second_epsilon_prot[0]))  # with reduced cysteines
+
+def clean_AA_seq(seq):
+    seq = str(seq).replace("*", "")
+    seq = seq.replace("X","")
+    return seq
+
+
 # MAIN FUNCTION
 def main():
     start = 31094927
     end = 31377677
+    length = end-start
+    print(length)
+    print(length/3)
+    initial_record = None
     first_SNP_location = 31357033
+    first_SNP_record = None
     second_SNP_location = 31095311
+    second_SNP_record = None
+
+
+    # Get the FASTA sequence of NF1
     for record in SeqIO.parse("gene1.fasta", "fasta"):
-        print(record.id)
-        # print(record.seq)
-        # print(len(record.seq))
+        initial_record = record
+    verify_all_nucleotides(initial_record)
+
+    first_SNP_record = copy_record(initial_record)
+    second_SNP_record = copy_record(initial_record)
+
+
+    if verify_nucleotide(first_SNP_record,first_SNP_location-start,"C"):
+        first_SNP_record = change_nucleotide(first_SNP_record,first_SNP_location-start,"T")
+        print("FIRST SNP SEQ replace C with T successfully")
+    if verify_nucleotide(second_SNP_record,second_SNP_location-start,"T"):
+        second_SNP_record = change_nucleotide(second_SNP_record,second_SNP_location-start,"A")
+        print("SECOND SNP SEQ replace T with A successfully")
+
+
+    first_SNP_record = complete_nucleotide_codons_N(first_SNP_record)
+    second_SNP_record = complete_nucleotide_codons_N(second_SNP_record)
+
+    first_SNP_seq_2_Protein = first_SNP_record.seq.translate()
+    second_SNP_seq_2_Protein = second_SNP_record.seq.translate()
+    print(first_SNP_seq_2_Protein)
+    print(second_SNP_seq_2_Protein)
+
+    print(len(first_SNP_seq_2_Protein))
+    print(len(second_SNP_seq_2_Protein))
+    print(type(first_SNP_seq_2_Protein))
+    first_clean = clean_AA_seq(first_SNP_seq_2_Protein)
+    second_clean = clean_AA_seq(second_SNP_seq_2_Protein)
+    print(first_clean)
+
+    one = ProteinAnalysis(first_clean)
+    two = ProteinAnalysis(second_clean)
+
+    compare_two_AA_seqs(one,two)
     # NC_000017.11:31094927-31377677
     # first SNP location C>T 31357033
     # second SNP location 31095311 T>A
-    # with open('gene.fna') as f:
-    #     # NF1 gene
-    #     lines = f.readlines()
-    #     lines = [line.replace("\n","").strip() for line in lines]
-    #     lines = [line.replace(" ","").strip() for line in lines]
-    #     gene = "".join(lines)
-    #     print(len(gene))
     # """The main program collects """
 
     # Init Entrez email addr to use
@@ -122,20 +244,6 @@ def main():
     #
     #     # SeqIO.read  fasta info
     #     record_seq = SeqIO.read(handle_read_id_info, "fasta")
-    #
-    #     # Print the fasta sequences
-    #     print()
-    #     # Print sequence ACC number and sequence
-    #     print("record_seq.id: ", record_seq.id)
-    #     print("record_seq.seq: ", record_seq.seq)
-    #     print(len(record_seq.seq))
-    #     sum += len(record_seq.seq)
-    #     print("==========")
-
-
-    print()
-    print("sum length: " + str(sum))
-    print ("############### DONE ###############")
     return
 
 
