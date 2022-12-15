@@ -32,7 +32,7 @@ import os
 import re
 import copy
 from copy import copy
-
+import Bio
 import Bio.SeqRecord
 from Bio import Entrez
 from Bio import SeqIO
@@ -170,7 +170,7 @@ def main():
 
 
     # Get the FASTA sequence of NF1
-    for record in SeqIO.parse("gene1.fasta", "fasta"):
+    for record in SeqIO.parse("NF1.fasta", "fasta"):
         initial_record = record
     verify_all_nucleotides(initial_record)
 
@@ -192,13 +192,7 @@ def main():
     initial_complete_seq_2_Protein = initial_complete.seq.translate()
     first_SNP_seq_2_Protein = first_SNP_record.seq.translate()
     second_SNP_seq_2_Protein = second_SNP_record.seq.translate()
-    # print(first_SNP_seq_2_Protein)
-    # print(second_SNP_seq_2_Protein)
 
-    # print(len(initial_complete_seq_2_Protein))
-    # print(len(first_SNP_seq_2_Protein))
-    # print(len(second_SNP_seq_2_Protein))
-    # print(type(first_SNP_seq_2_Protein))
     initial_clean = clean_AA_seq(initial_complete_seq_2_Protein)
     first_clean = clean_AA_seq(first_SNP_seq_2_Protein)
     second_clean = clean_AA_seq(second_SNP_seq_2_Protein)
@@ -214,37 +208,6 @@ def main():
     # second SNP location 31095311 T>A
     # """The main program collects """
 
-    # Init Entrez email addr to use
-    # Entrez.email = "David.Warshawsky@sjsu.edu"
-
-    # Extract Entrez info for the specified ACC number
-    # print("\n\n#####")
-    # acc_num = "NC_000017.11"
-    # print("PROCESSING ACC #: ", acc_num)
-
-    # Entrez.esearch for info related to the current accession number
-    # handle = Entrez.esearch(db='gene', term='human[organism] ' + str(acc_num))
-
-    # Entrez.read the result returned from NCBI search for the current accession number
-    # handle_read = Entrez.read(handle)
-
-    # Get Idlist from previous read of accession number info
-    # handle_read_ids = handle_read['IdList']
-    # print("handle_read_ids: ", handle_read_ids)
-
-    # Make sure IDs in Idlist are valid. Return a list of only valid IDs.
-    # valid_handle_read_ids = get_valid_ids(handle_read_ids, 'nucleotide', 'fasta', 'efetch')
-    # if valid_handle_read_ids == []:
-    #     print("   epigen_pipeline_get_entrez_info: No valid IDs found for ACC #" + str(acc_num) + ".")
-    #     return
-    #
-    # # If we get here, valid_handle_read_ids has usable ID nums.
-    # for acc_handle_id in valid_handle_read_ids:
-    #     # Entrez.efetch based on ID#
-    #     handle_read_id_info = Entrez.efetch(db="nucleotide", id=int(acc_handle_id), rettype="fasta")
-    #
-    #     # SeqIO.read  fasta info
-    #     record_seq = SeqIO.read(handle_read_id_info, "fasta")
     return
 
 
